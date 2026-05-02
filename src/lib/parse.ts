@@ -1,8 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
-import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import PdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker';
 import mammoth from 'mammoth';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker();
 
 export type ParseResult = {
   text: string;
