@@ -2,7 +2,7 @@
 
 A lightweight, **explainable** medical-report viewer. Upload a lab report (PDF / DOCX / TXT) and get a ranked list of structured findings with **click-to-trace** source linkage — every AI insight is anchored to the exact snippet of the original report it came from.
 
-**Live demo:** https://omiiii21.github.io/med-report-ai/
+**Live demo:** deployed on Vercel — see your project's Vercel dashboard for the URL (`https://<project>.vercel.app`).
 
 > The deployed site ships with a precomputed analysis for a sample report, so you can explore the full UX without an API key. To analyze your own report, paste an OpenRouter key in Settings.
 
@@ -26,7 +26,7 @@ The contract requires every finding's `source_snippet` to be a **verbatim substr
 - `mammoth` for DOCX
 - `zod` for response schema validation
 - OpenRouter (`response_format: json_object`) — bring-your-own-key
-- Static deploy via GitHub Actions → GitHub Pages
+- Static deploy on Vercel
 
 ---
 
@@ -68,21 +68,26 @@ src/
 scripts/
   extract-sample.ts     prints the extracted PDF text to scripts/sample-extracted.txt
   precompute-sample.ts  regenerates public/sample-analysis.json
-.github/workflows/
-  deploy.yml            GitHub Actions → GitHub Pages
 public/
   sample-report.pdf     bundled demo input
   sample-analysis.json  precomputed demo output (no key required)
+vercel.json             framework + caching config for Vercel
 ```
 
 ---
 
 ## Deploying your own fork
 
+**Vercel (recommended):**
 1. Fork or clone, push to your GitHub account.
-2. Update `vite.config.ts`'s `base` to match your repo name (`/<repo>/`).
-3. Repo **Settings → Pages → Build and deployment → Source: GitHub Actions** (one-time).
-4. Push to `main`. The `Deploy to GitHub Pages` workflow builds and publishes automatically.
+2. Go to [vercel.com/new](https://vercel.com/new), import the repo. Vercel auto-detects Vite from `vercel.json`.
+3. Click Deploy. Done — every push to `main` ships automatically.
+
+**Vercel CLI alternative:**
+```bash
+npx vercel        # first run links the repo and deploys to a preview URL
+npx vercel --prod # promotes to production
+```
 
 ---
 
