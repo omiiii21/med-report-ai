@@ -1,0 +1,61 @@
+{
+  "tests": [
+    {
+      "name": "Cardio C-Reactive Protein (hsCRP)",
+      "value": "1.00",
+      "range": "<1.00",
+      "units": "mg/L",
+      "status": "abnormal",
+      "priority": "medium",
+      "finding": "At the boundary of low cardiovascular risk",
+      "explanation": "hsCRP is a marker of inflammation that helps gauge cardiovascular risk. A value of 1.00 mg/L sits right at the boundary between the low-risk (<1) and average-risk (1–3) bands shown on the report. Repeating the test in a few weeks is commonly recommended to confirm the trend.",
+      "source_snippet": "CARDIO C-REACTIVE PROTEIN (hsCRP), SERUM  (Immunoturbidimetry)  mg/L   <1.00 1.00"
+    },
+    {
+      "name": "Apolipoprotein B (Apo B)",
+      "value": "46.00",
+      "range": "46 - 174",
+      "units": "mg/dL",
+      "status": "normal",
+      "priority": "low",
+      "finding": "Right at the lower end of normal",
+      "explanation": "Apo B reflects the number of cholesterol-carrying particles linked to atherosclerosis. This result is just inside the lower edge of the printed reference range, which is generally a favorable signal.",
+      "source_snippet": "APOLIPOPROTEIN B (Apo B)  (Immunoturbidimetry)  mg/dL   46 - 174 46.00"
+    },
+    {
+      "name": "Troponin-I, High Sensitive",
+      "value": "4",
+      "range": "<6 (male, low risk cut-off shown on report)",
+      "units": "ng/L",
+      "status": "normal",
+      "priority": "low",
+      "finding": "Within the low-risk band for males",
+      "explanation": "High-sensitivity Troponin-I helps detect cardiac stress. The reading of 4 ng/L falls under the report's low-risk cut-off of <6 for males, which is reassuring.",
+      "source_snippet": "TROPONIN- I, SERUM  HIGH SENSITIVE  (CMIA)  ng/L 4"
+    },
+    {
+      "name": "Glucose, Fasting (Plasma)",
+      "value": "",
+      "range": "70 - 100",
+      "units": "mg/dL",
+      "status": "unknown",
+      "priority": "low",
+      "finding": "Result pending",
+      "explanation": "The fasting glucose value has not been reported yet on this interim report. The reference range is shown for context.",
+      "source_snippet": "GLUCOSE, FASTING (F), PLASMA  (GOD POD)  mg/dL   70 - 100"
+    },
+    {
+      "name": "HbA1c (Glycosylated Hemoglobin)",
+      "value": "",
+      "range": "4.00 - 5.60",
+      "units": "%",
+      "status": "unknown",
+      "priority": "low",
+      "finding": "Result pending",
+      "explanation": "HbA1c gives an estimate of average blood sugar over the past few months. The numeric result is not yet reported on this interim report.",
+      "source_snippet": "HbA1c (GLYCOSYLATED HEMOGLOBIN), BLOOD  (HPLC, NGSP certified)  HbA1c   %   4.00 - 5.60"
+    }
+  ],
+  "summary": "This is an interim Heart Health Screen. hsCRP sits right at the boundary between low and average cardiovascular risk; Apo B and Troponin-I are within the printed reference ranges. Several panel results (lipids, glucose, HbA1c, Lp(a)) have not been reported yet.",
+  "confidence": 0.62
+}

@@ -53,5 +53,17 @@ async function extractDocx(buf: ArrayBuffer): Promise<string> {
 }
 
 function normalize(s: string): string {
-  return s.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return decodePrivateUse(s)
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+// Some PDFs (notably certain Indian lab-report generators) encode glyphs in the
+// Unicode Private Use Area as 0xF000 + ASCII. Map those back to the corresponding
+// ASCII characters so the text becomes searchable / LLM-readable.
+function decodePrivateUse(s: string): string {
+  return s.replace(/[-]/g, (ch) =>
+    String.fromCharCode(ch.charCodeAt(0) - 0xf000)
+  );
 }

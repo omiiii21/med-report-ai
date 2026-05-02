@@ -2,6 +2,8 @@ node_modules/
 dist/
 dist-ssr/
 .vite/
+*.tsbuildinfo
+scripts/sample-extracted.txt
 
 # env
 .env
@@ -11,6 +13,7 @@ dist-ssr/
 # editor / OS
 .vscode/
 .idea/
+.claude/
 .DS_Store
 *.log
 npm-debug.log*
