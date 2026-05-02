@@ -6,9 +6,18 @@ import { ConfidenceBanner } from './components/ConfidenceBanner';
 import { DualView } from './components/DualView';
 import { StatusOverlay } from './components/StatusOverlay';
 import { extractText } from './lib/parse';
-import { analyzeReport, DEFAULT_MODEL } from './lib/llm';
+import { analyzeReport, DEFAULT_MODELS, PROVIDER_LABELS, type Provider } from './lib/llm';
 import { ReportAnalysis } from './lib/schema';
-import { getApiKey, setApiKey, getModel, setModel, clearApiKey } from './lib/storage';
+import {
+  getProvider,
+  setProvider,
+  getApiKey,
+  setApiKey,
+  getModel,
+  setModel,
+  clearApiKey,
+  getActiveCredentials,
+} from './lib/storage';
 
 type AppState =
   | { kind: 'idle' }
@@ -32,79 +41,82 @@ export default function App() {
   const [state, setState] = useState<AppState>({ kind: 'idle' });
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
-  const [apiKey, setApiKeyState] = useState<string>('');
-  const [model, setModelState] = useState<string>(DEFAULT_MODEL);
+  const [activeProvider, setActiveProvider] = useState<Provider>('openrouter');
+  const [hasActiveKey, setHasActiveKey] = useState(false);
+
+  const refreshCredsFlag = useCallback(() => {
+    const provider = getProvider();
+    setActiveProvider(provider);
+    setHasActiveKey(!!getApiKey(provider));
+  }, []);
 
   useEffect(() => {
-    setApiKeyState(getApiKey() ?? '');
-    setModelState(getModel() ?? DEFAULT_MODEL);
-  }, []);
+    refreshCredsFlag();
+  }, [refreshCredsFlag]);
 
   const reset = useCallback(() => {
     setState({ kind: 'idle' });
     setSelectedIdx(null);
   }, []);
 
-  const handleFile = useCallback(
-    async (file: File) => {
-      setSelectedIdx(null);
+  const handleFile = useCallback(async (file: File) => {
+    setSelectedIdx(null);
 
-      // 1. Parse.
-      setState({ kind: 'parsing', fileName: file.name });
-      let raw: string;
-      let parseMs: number;
-      try {
-        const r = await extractText(file);
-        raw = r.text;
-        parseMs = r.parseMs;
-      } catch (e) {
-        setState({ kind: 'error', message: (e as Error).message });
-        return;
-      }
+    setState({ kind: 'parsing', fileName: file.name });
+    let raw: string;
+    let parseMs: number;
+    try {
+      const r = await extractText(file);
+      raw = r.text;
+      parseMs = r.parseMs;
+    } catch (e) {
+      setState({ kind: 'error', message: (e as Error).message });
+      return;
+    }
 
-      if (!raw || raw.trim().length === 0) {
-        setState({
-          kind: 'error',
-          message:
-            "Couldn't extract any text from this file. If it's a scanned/image-only PDF, OCR is not supported in this version. Try a text-based PDF, a DOCX, or paste the text into a .txt file.",
-        });
-        return;
-      }
+    if (!raw || raw.trim().length === 0) {
+      setState({
+        kind: 'error',
+        message:
+          "Couldn't extract any text from this file. If it's a scanned/image-only PDF, OCR is not supported in this version. Try a text-based PDF, a DOCX, or paste the text into a .txt file.",
+      });
+      return;
+    }
 
-      // 2. Analyze with LLM (if key) or fail with helpful message.
-      const key = getApiKey();
-      if (!key) {
-        setState({
-          kind: 'error',
-          message:
-            'No OpenRouter API key configured. Open Settings to add one, or click "Try sample report" on the home screen for a no-key demo.',
-        });
-        return;
-      }
+    const creds = getActiveCredentials();
+    if (!creds) {
+      setState({
+        kind: 'error',
+        message:
+          'No API key configured. Open Settings to add one (OpenRouter or Google Gemini), or click "Try sample report" on the home screen for a no-key demo.',
+      });
+      return;
+    }
 
-      setState({ kind: 'analyzing' });
-      try {
-        const result = await analyzeReport(raw, { apiKey: key, model: getModel() ?? DEFAULT_MODEL });
-        setState({
-          kind: 'ready',
-          raw,
-          analysis: result.analysis,
-          parseMs,
-          llmMs: result.llmMs,
-          demoMode: false,
-          model: result.model,
-        });
-      } catch (e) {
-        setState({ kind: 'error', message: (e as Error).message });
-      }
-    },
-    []
-  );
+    setState({ kind: 'analyzing' });
+    try {
+      const result = await analyzeReport(raw, {
+        provider: creds.provider,
+        apiKey: creds.apiKey,
+        model: creds.model || DEFAULT_MODELS[creds.provider],
+      });
+      setState({
+        kind: 'ready',
+        raw,
+        analysis: result.analysis,
+        parseMs,
+        llmMs: result.llmMs,
+        demoMode: false,
+        model: `${PROVIDER_LABELS[result.provider]} · ${result.model}`,
+      });
+    } catch (e) {
+      setState({ kind: 'error', message: (e as Error).message });
+    }
+  }, []);
 
   const handleTrySample = useCallback(async () => {
     setSelectedIdx(null);
 
-    // 1. Fetch sample PDF and parse it (so the raw view shows real extracted text).
     setState({ kind: 'parsing', fileName: 'sample-report.pdf' });
     let raw = '';
     let parseMs = 0;
@@ -121,12 +133,15 @@ export default function App() {
       return;
     }
 
-    // 2. If user has an API key, run live. Otherwise, load precomputed analysis.
-    const key = getApiKey();
-    if (key) {
+    const creds = getActiveCredentials();
+    if (creds) {
       setState({ kind: 'analyzing' });
       try {
-        const result = await analyzeReport(raw, { apiKey: key, model: getModel() ?? DEFAULT_MODEL });
+        const result = await analyzeReport(raw, {
+          provider: creds.provider,
+          apiKey: creds.apiKey,
+          model: creds.model || DEFAULT_MODELS[creds.provider],
+        });
         setState({
           kind: 'ready',
           raw,
@@ -134,7 +149,7 @@ export default function App() {
           parseMs,
           llmMs: result.llmMs,
           demoMode: false,
-          model: result.model,
+          model: `${PROVIDER_LABELS[result.provider]} · ${result.model}`,
         });
         return;
       } catch (e) {
@@ -163,22 +178,26 @@ export default function App() {
     }
   }, []);
 
-  const handleSaveKey = useCallback((key: string, m: string) => {
-    setApiKey(key);
-    setModel(m);
-    setApiKeyState(key);
-    setModelState(m);
-    setKeyDialogOpen(false);
-  }, []);
+  const handleSaveKey = useCallback(
+    (provider: Provider, key: string, model: string) => {
+      setProvider(provider);
+      setApiKey(provider, key);
+      setModel(provider, model);
+      setKeyDialogOpen(false);
+      refreshCredsFlag();
+    },
+    [refreshCredsFlag]
+  );
 
-  const handleClearKey = useCallback(() => {
-    clearApiKey();
-    setApiKeyState('');
-    setKeyDialogOpen(false);
-  }, []);
+  const handleClearKey = useCallback(
+    (provider: Provider) => {
+      clearApiKey(provider);
+      refreshCredsFlag();
+    },
+    [refreshCredsFlag]
+  );
 
   const hasReport = state.kind === 'ready';
-  const busy = state.kind === 'parsing' || state.kind === 'analyzing';
 
   return (
     <div className="flex min-h-full flex-col">
@@ -186,7 +205,7 @@ export default function App() {
         onOpenSettings={() => setKeyDialogOpen(true)}
         onReset={reset}
         hasReport={hasReport}
-        apiKeyPresent={!!apiKey}
+        apiKeyPresent={hasActiveKey}
       />
 
       <main className="flex-1">
@@ -231,15 +250,13 @@ export default function App() {
 
       <KeyDialog
         open={keyDialogOpen}
-        initialKey={apiKey}
-        initialModel={model}
+        initialProvider={activeProvider}
+        getKeyFor={(p) => getApiKey(p) ?? ''}
+        getModelFor={(p) => getModel(p) ?? ''}
         onSave={handleSaveKey}
         onClear={handleClearKey}
         onClose={() => setKeyDialogOpen(false)}
       />
-
-      {/* Avoid unused-busy lint warning if needed in future */}
-      <span className="hidden">{busy ? '' : ''}</span>
     </div>
   );
 }

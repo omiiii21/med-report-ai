@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { ShareCard } from './ShareCard';
 
 type Props = {
   onFile: (file: File) => void;
@@ -77,9 +78,11 @@ export function Upload({ onFile, onTrySample, busy }: Props) {
         />
       </div>
 
+      <ShareCard />
+
       <ul className="mt-6 space-y-1 text-xs text-slate-500">
         <li>• Supported: text-based PDFs, DOCX, plain text. OCR for scanned images is not supported in this version.</li>
-        <li>• Your OpenRouter API key (if used) stays in your browser session and is never sent anywhere except OpenRouter.</li>
+        <li>• Your API key (if used) stays in your browser session and is only sent to the AI provider you select.</li>
         <li>• The sample report works offline using a precomputed analysis — no API key required.</li>
       </ul>
     </div>
